@@ -1534,10 +1534,6 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     /* Temporarily enable everything else for sorting */
     ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
 
-    /* Low priority for MD5 */
-    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_MD5, 0, 0, CIPHER_ORD, -1, &head,
-                          &tail);
-
     /*
      * Move anonymous ciphers to the end.  Usually, these will remain
      * disabled. (For applications that allow them, they aren't too bad, but
@@ -1572,6 +1568,13 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
         OPENSSL_free(co_list);
         return NULL;
     }
+
+    /* Prefer AEAD as main criterion */
+    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_AEAD, 0, 0, CIPHER_ORD, -1, &head, &tail);
+    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_SHA384, 0, 0, CIPHER_ORD, -1, &head, &tail);
+    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_SHA256, 0, 0, CIPHER_ORD, -1, &head, &tail);
+    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_SHA1, 0, 0, CIPHER_ORD, -1, &head, &tail);
+    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_MD5, 0, 0, CIPHER_ORD, -1, &head, &tail);
 
     /* Now disable everything (maintaining the ordering!) */
     ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
