@@ -44,11 +44,11 @@ obj_dat.h: obj_dat.pl obj_mac.h
 # objects.pl both reads and writes obj_mac.num
 obj_mac.h: objects.pl objects.txt obj_mac.num
 	$(PERL) objects.pl objects.txt obj_mac.num obj_mac.h
-	@sleep 1; touch obj_mac.h; sleep 1
 
-obj_xref.h: objxref.pl obj_xref.txt obj_mac.num
+# This doesn't really need obj_mac.h, but since that rule reads & writes
+# obj_mac.num, we can't run in parallel with it.
+obj_xref.h: objxref.pl obj_xref.txt obj_mac.num obj_mac.h
 	$(PERL) objxref.pl obj_mac.num obj_xref.txt > obj_xref.h
-	@sleep 1; touch obj_xref.h; sleep 1
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
