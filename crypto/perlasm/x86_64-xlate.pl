@@ -269,6 +269,10 @@ my %globals;
 		$self->{base} = $self->{index}; $self->{index} = $1;
 	}
 
+	# When building on x32 ABIs, the expanded hex value might be too
+	# big to fit into 32bits.  Enable transparent 64bit support here
+	# so we can safely print it out.
+	use bigint;
 	if ($gas) {
 	    $self->{label} =~ s/^___imp_/__imp__/   if ($flavour eq "mingw64");
 
