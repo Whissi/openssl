@@ -1,4 +1,4 @@
-/* apps/speed.c */
+/* apps/speed.c -*- mode:C; c-file-style: "eay" -*- */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,7 +226,7 @@
 # endif
 
 # undef BUFSIZE
-# define BUFSIZE ((long)1024*8+1)
+# define BUFSIZE ((long)1024*8+16)
 static volatile int run = 0;
 
 static int mr = 0;
@@ -241,7 +241,7 @@ static void print_result(int alg, int run_no, int count, double time_used);
 static int do_multi(int multi);
 # endif
 
-# define ALGOR_NUM       30
+# define ALGOR_NUM       31
 # define SIZE_NUM        5
 # define RSA_NUM         4
 # define DSA_NUM         3
@@ -256,7 +256,7 @@ static const char *names[ALGOR_NUM] = {
     "aes-128 cbc", "aes-192 cbc", "aes-256 cbc",
     "camellia-128 cbc", "camellia-192 cbc", "camellia-256 cbc",
     "evp", "sha256", "sha512", "whirlpool",
-    "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash"
+    "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash", "chacha20-poly1305"
 };
 
 static double results[ALGOR_NUM][SIZE_NUM];
@@ -516,6 +516,7 @@ int MAIN(int argc, char **argv)
 # define D_IGE_192_AES   27
 # define D_IGE_256_AES   28
 # define D_GHASH         29
+# define D_CHAPOLY       30
     double d = 0.0;
     long c[ALGOR_NUM][SIZE_NUM];
 # define R_DSA_512       0
@@ -972,6 +973,9 @@ int MAIN(int argc, char **argv)
             doit[D_CBC_256_CML] = 1;
         } else
 # endif
+        if (strcmp(*argv, "chacha20-poly1305") == 0) {
+            doit[D_CHAPOLY] = 1;
+        } else
 # ifndef OPENSSL_NO_RSA
         if (strcmp(*argv, "rsa") == 0) {
             rsa_doit[R_RSA_512] = 1;
@@ -1139,6 +1143,7 @@ int MAIN(int argc, char **argv)
             BIO_printf(bio_err, "rc4");
 # endif
             BIO_printf(bio_err, "\n");
+            BIO_printf(bio_err, "chacha20-poly1305\n");
 
 # ifndef OPENSSL_NO_RSA
             BIO_printf(bio_err, "rsa512   rsa1024  rsa2048  rsa4096\n");
@@ -1370,6 +1375,7 @@ int MAIN(int argc, char **argv)
     c[D_IGE_192_AES][0] = count;
     c[D_IGE_256_AES][0] = count;
     c[D_GHASH][0] = count;
+    c[D_CHAPOLY][0] = count;
 
     for (i = 1; i < SIZE_NUM; i++) {
         c[D_MD2][i] = c[D_MD2][0] * 4 * lengths[0] / lengths[i];
@@ -1821,6 +1827,22 @@ int MAIN(int argc, char **argv)
         CRYPTO_gcm128_release(ctx);
     }
 # endif
+    if (doit[D_CHAPOLY]) {
+        EVP_CIPHER_CTX ctx;
+        EVP_CIPHER_CTX_init(&ctx);
+        EVP_CipherInit_ex(&ctx, EVP_chacha20_poly1305(), NULL, key32, iv, 1);
+
+        for (j = 0; j < SIZE_NUM; j++) {
+             print_message(names[D_CHAPOLY], c[D_CHAPOLY][j], lengths[j]);
+             Time_F(START);
+             for (count = 0, run = 1; COND(c[D_CHAPOLY][j]); count++) {
+                  EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_AEAD_TLS1_AAD, 13, buf);
+                  EVP_Cipher(&ctx, buf, buf, (unsigned long)lengths[j] + 16);
+             }
+             d = Time_F(STOP);
+             print_result(D_CHAPOLY, j, count, d);
+        }
+    }
 # ifndef OPENSSL_NO_CAMELLIA
     if (doit[D_CBC_128_CML]) {
         for (j = 0; j < SIZE_NUM; j++) {
