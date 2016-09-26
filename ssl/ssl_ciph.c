@@ -150,25 +150,27 @@
 #endif
 #include "ssl_locl.h"
 
-#define SSL_ENC_DES_IDX         0
-#define SSL_ENC_3DES_IDX        1
-#define SSL_ENC_RC4_IDX         2
-#define SSL_ENC_RC2_IDX         3
-#define SSL_ENC_IDEA_IDX        4
-#define SSL_ENC_NULL_IDX        5
-#define SSL_ENC_AES128_IDX      6
-#define SSL_ENC_AES256_IDX      7
-#define SSL_ENC_CAMELLIA128_IDX 8
-#define SSL_ENC_CAMELLIA256_IDX 9
-#define SSL_ENC_GOST89_IDX      10
-#define SSL_ENC_SEED_IDX        11
-#define SSL_ENC_AES128GCM_IDX   12
-#define SSL_ENC_AES256GCM_IDX   13
-#define SSL_ENC_NUM_IDX         14
+#define SSL_ENC_DES_IDX                     0
+#define SSL_ENC_3DES_IDX                    1
+#define SSL_ENC_RC4_IDX                     2
+#define SSL_ENC_RC2_IDX                     3
+#define SSL_ENC_IDEA_IDX                    4
+#define SSL_ENC_NULL_IDX                    5
+#define SSL_ENC_AES128_IDX                  6
+#define SSL_ENC_AES256_IDX                  7
+#define SSL_ENC_CAMELLIA128_IDX             8
+#define SSL_ENC_CAMELLIA256_IDX             9
+#define SSL_ENC_GOST89_IDX                  10
+#define SSL_ENC_SEED_IDX                    11
+#define SSL_ENC_AES128GCM_IDX               12
+#define SSL_ENC_AES256GCM_IDX               13
+#define SSL_ENC_CHACHA20POLY1305_DRAFT_IDX  14
+#define SSL_ENC_CHACHA20POLY1305_IDX        15
+#define SSL_ENC_NUM_IDX                     16
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL
+    NULL, NULL, NULL, NULL
 };
 
 #define SSL_COMP_NULL_IDX       0
@@ -362,6 +364,9 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL3_TXT_DHE_RSA_DES_192_CBC3_SHA, 0,
      SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS, 0, 0, 0,},
+
+    {0, SSL_TXT_CHACHA20_D, 0, 0, 0, SSL_CHACHA20POLY1305_D, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_CHACHA20, 0, 0, 0, SSL_CHACHA20POLY1305, 0, 0, 0, 0, 0, 0},
 };
 
 /*
@@ -430,6 +435,11 @@ void ssl_load_ciphers(void)
         EVP_get_cipherbyname(SN_aes_128_gcm);
     ssl_cipher_methods[SSL_ENC_AES256GCM_IDX] =
         EVP_get_cipherbyname(SN_aes_256_gcm);
+
+    ssl_cipher_methods[SSL_ENC_CHACHA20POLY1305_DRAFT_IDX] =
+        EVP_chacha20_poly1305_draft();
+    ssl_cipher_methods[SSL_ENC_CHACHA20POLY1305_IDX] =
+        EVP_chacha20_poly1305();
 
     ssl_digest_methods[SSL_MD_MD5_IDX] = EVP_get_digestbyname(SN_md5);
     ssl_mac_secret_size[SSL_MD_MD5_IDX] =
@@ -580,6 +590,12 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
         break;
     case SSL_AES256GCM:
         i = SSL_ENC_AES256GCM_IDX;
+        break;
+    case SSL_CHACHA20POLY1305_D:
+        i = SSL_ENC_CHACHA20POLY1305_DRAFT_IDX;
+        break;
+    case SSL_CHACHA20POLY1305:
+        i = SSL_ENC_CHACHA20POLY1305_IDX;
         break;
     default:
         i = -1;
@@ -795,6 +811,12 @@ static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth,
     *enc |=
         (ssl_cipher_methods[SSL_ENC_AES256GCM_IDX] ==
          NULL) ? SSL_AES256GCM : 0;
+    *enc |=
+        (ssl_cipher_methods[SSL_ENC_CHACHA20POLY1305_DRAFT_IDX] ==
+         NULL) ? SSL_CHACHA20POLY1305_D : 0;
+    *enc |=
+        (ssl_cipher_methods[SSL_ENC_CHACHA20POLY1305_IDX] ==
+         NULL) ? SSL_CHACHA20POLY1305 : 0;
     *enc |=
         (ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX] ==
          NULL) ? SSL_CAMELLIA128 : 0;
@@ -1811,6 +1833,12 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     case SSL_AES256GCM:
         enc = "AESGCM(256)";
+        break;
+    case SSL_CHACHA20POLY1305_D:
+        enc = "ChaCha20-Poly1305-draft";
+        break;
+    case SSL_CHACHA20POLY1305:
+        enc = "ChaCha20-Poly1305";
         break;
     case SSL_CAMELLIA128:
         enc = "Camellia(128)";

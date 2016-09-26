@@ -656,16 +656,6 @@ const char *CRYPTO_get_lock_name(int type)
 extern unsigned int OPENSSL_ia32cap_P[4];
 unsigned long *OPENSSL_ia32cap_loc(void)
 {
-    if (sizeof(long) == 4)
-        /*
-         * If 32-bit application pulls address of OPENSSL_ia32cap_P[0]
-         * clear second element to maintain the illusion that vector
-         * is 32-bit.
-         */
-        OPENSSL_ia32cap_P[1] = 0;
-
-    OPENSSL_ia32cap_P[2] = 0;
-
     return (unsigned long *)OPENSSL_ia32cap_P;
 }
 

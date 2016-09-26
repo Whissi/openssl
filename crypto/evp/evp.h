@@ -893,6 +893,10 @@ const EVP_CIPHER *EVP_camellia_256_cfb128(void);
 #  define EVP_camellia_256_cfb EVP_camellia_256_cfb128
 const EVP_CIPHER *EVP_camellia_256_ofb(void);
 # endif
+# ifndef OPENSSL_NO_CHACHA_POLY
+const EVP_CIPHER *EVP_chacha20_poly1305(void);
+const EVP_CIPHER *EVP_chacha20_poly1305_draft(void);
+# endif
 
 # ifndef OPENSSL_NO_SEED
 const EVP_CIPHER *EVP_seed_ecb(void);
