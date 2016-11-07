@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 958
-#define NUM_SN 951
-#define NUM_LN 951
+#define NUM_NID 960
+#define NUM_SN 953
+#define NUM_LN 953
 #define NUM_OBJ 890
 
 static const unsigned char lvalues[6255]={
@@ -2514,6 +2514,9 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_jurisdictionStateOrProvinceName,11,&(lvalues[6232]),0},
 {"jurisdictionC","jurisdictionCountryName",
 	NID_jurisdictionCountryName,11,&(lvalues[6243]),0},
+{"CHACHA20-POLY1305","chacha20-poly1305",NID_chacha20_poly1305,0,NULL,0},
+{"CHACHA20-POLY1305-D","chacha20-poly1305-draft",
+	NID_chacha20_poly1305_draft,0,NULL,0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2574,6 +2577,8 @@ static const unsigned int sn_objs[NUM_SN]={
 110,	/* "CAST5-CFB" */
 109,	/* "CAST5-ECB" */
 111,	/* "CAST5-OFB" */
+958,	/* "CHACHA20-POLY1305" */
+959,	/* "CHACHA20-POLY1305-D" */
 894,	/* "CMAC" */
 13,	/* "CN" */
 141,	/* "CRLReason" */
@@ -3728,6 +3733,8 @@ static const unsigned int ln_objs[NUM_LN]={
 677,	/* "certicom-arc" */
 517,	/* "certificate extensions" */
 883,	/* "certificateRevocationList" */
+958,	/* "chacha20-poly1305" */
+959,	/* "chacha20-poly1305-draft" */
 54,	/* "challengePassword" */
 407,	/* "characteristic-two-field" */
 395,	/* "clearance" */
